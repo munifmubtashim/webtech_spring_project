@@ -1,5 +1,5 @@
 <?php
-class db {
+
 function connection() {
     $db_host     = "localhost";
     $db_user     = "root";
@@ -14,6 +14,6 @@ function connection() {
 
     return $connection;
 }
-}
+
 
 ?>

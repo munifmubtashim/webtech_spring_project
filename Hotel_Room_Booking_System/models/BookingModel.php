@@ -43,6 +43,19 @@ function createBooking($connection, $userId, $roomId, $checkin, $checkout, $tota
 
 	return false;
 }
+function getBookingById($connection, $bookingId)
+{
+	$sql = "SELECT b.*, rt.name AS room_type_name, r.room_number
+	FROM bookings b
+	JOIN rooms r ON b.room_id = r.id
+	JOIN room_types rt ON r.room_type_id = rt.id
+	WHERE b.id = ?";
+
+	$statement = $connection->prepare($sql);
+	$statement->bind_param("i", $bookingId);
+	$statement->execute();
+	return $statement->get_result();
+}
 function getBookingsByUser($connection, $userId)
 {
 	$sql = "SELECT b.*, rt.name AS room_type_name, r.room_number
