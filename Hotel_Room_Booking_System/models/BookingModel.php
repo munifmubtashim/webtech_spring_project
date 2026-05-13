@@ -29,5 +29,33 @@ function getAvailableRoom($connection, $roomTypeId, $checkin, $checkout)
     $result = $statement->get_result();
     return $result;
 }
+function createBooking($connection, $userId, $roomId, $checkin, $checkout, $totalPrice)
+{
+	$sql = "INSERT INTO bookings (user_id, room_id, checkin_date, checkout_date, total_price, status)
+	VALUES (?, ?, ?, ?, ?, 'Pending')";
+
+	$statement = $connection->prepare($sql);
+	$statement->bind_param("iissd", $userId, $roomId, $checkin, $checkout, $totalPrice);
+
+	if ($statement->execute()) {
+		return $connection->insert_id;
+	}
+
+	return false;
+}
+function getBookingsByUser($connection, $userId)
+{
+	$sql = "SELECT b.*, rt.name AS room_type_name, r.room_number
+	FROM bookings b
+	JOIN rooms r ON b.room_id = r.id
+	JOIN room_types rt ON r.room_type_id = rt.id
+	WHERE b.user_id = ?
+	ORDER BY b.created_at DESC";
+
+	$statement = $connection->prepare($sql);
+	$statement->bind_param("i", $userId);
+	$statement->execute();
+	return $statement->get_result();
+}
 
 ?>
