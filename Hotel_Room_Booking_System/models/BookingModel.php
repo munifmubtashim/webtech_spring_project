@@ -58,4 +58,23 @@ function getBookingsByUser($connection, $userId)
 	return $statement->get_result();
 }
 
+function cancelBooking($connection, $bookingId, $userId)
+{
+	$sql = "UPDATE bookings
+	SET status = 'Cancelled'
+	WHERE id = ?
+	AND user_id = ?
+	AND status IN ('Pending', 'Confirmed')
+	AND checkin_date > DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
+
+	$statement = $connection->prepare($sql);
+	$statement->bind_param("ii", $bookingId, $userId);
+	$statement->execute();
+
+	if ($connection->affected_rows > 0) {
+		return "Booking Cancelled Successfully";
+	}
+
+	return false;
+}
 ?>
