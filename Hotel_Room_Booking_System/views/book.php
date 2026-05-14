@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -176,6 +174,32 @@
             margin-top: 5px;
             display: none;
         }
+.checkbox-group {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.checkbox-label {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #f39c12;
+    cursor: pointer;
+    position: relative;
+    top: -1px;
+}
     </style>
 </head>
 
@@ -195,6 +219,13 @@
             <?php endif; ?>
         </div>
     </nav>
+
+    <?php
+    $checkin = $_GET['checkin'] ?? '';
+    $checkout = $_GET['checkout'] ?? '';
+    $guests = $_GET['guests'] ?? '';
+    $roomTypeId = $_GET['room_type_id'] ?? '';
+    ?>
 
     <div class="container">
 
@@ -275,14 +306,15 @@
                     <label>Special Requests (Optional)</label>
                     <textarea name="special_requests" placeholder="Any special requests..."></textarea>
                 </div>
+              <div class="form-group checkbox-group">
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="agreeCheck">
-                        I agree to the booking terms and conditions
-                    </label>
-                    <span class="error" id="agreeError">You must agree to proceed</span>
-                </div>
+    <label for="agreeCheck" class="checkbox-label">
+        I agree to the booking terms and conditions
+    </label>
+
+    <input type="checkbox" id="agreeCheck">
+
+</div>
 
                 <button type="submit" class="btn-confirm">Confirm Booking</button>
 

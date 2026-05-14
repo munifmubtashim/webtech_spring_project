@@ -1,7 +1,4 @@
-<?php
 
-session_start();
-?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +47,7 @@ session_start();
 
 
         .hero {
-            background-image: url('/Hotel_Room_Booking_System/uploads/homew.png');
+            background-image: url('uploads/homew.png');
             background-size: cover;
             background-position: center;
             color: white;

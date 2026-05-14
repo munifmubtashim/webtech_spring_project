@@ -1,6 +1,4 @@
-// js/booking.js
 
-// ==================== SEARCH ROOMS (results.php) ====================
 function searchRooms(checkin, checkout, guests) {
 
     const formData = new FormData();
@@ -26,7 +24,7 @@ function searchRooms(checkin, checkout, guests) {
 
         rooms.forEach(room => {
 
-            // build amenity tags
+
             let amenityHTML = '';
             if (room.amenities) {
                 room.amenities.forEach(a => {
@@ -63,7 +61,7 @@ function searchRooms(checkin, checkout, guests) {
     });
 }
 
-// ==================== CANCEL BOOKING (my_bookings.php) ====================
+
 function cancelBooking(bookingId) {
 
     if (!confirm('Are you sure you want to cancel this booking?')) return;
@@ -99,7 +97,7 @@ function cancelBooking(bookingId) {
     });
 }
 
-// ==================== TOAST ====================
+
 function showToast(message, type) {
     const toast            = document.getElementById('toast');
     toast.innerText        = message;
