@@ -1,9 +1,20 @@
 <?php
 
+if (!isset($checkin)) {
+    $checkin = $_REQUEST['checkin'] ?? '';
+}
+if (!isset($checkout)) {
+    $checkout = $_REQUEST['checkout'] ?? '';
+}
+if (!isset($guests)) {
+    $guests = $_REQUEST['guests'] ?? '';
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,7 +69,7 @@
             padding: 15px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             color: #2c3e50;
             font-size: 15px;
         }
@@ -79,7 +90,7 @@
             background-color: white;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -175,118 +186,59 @@
         }
     </style>
 </head>
+
 <body>
 
 
-<nav>
-    <div class="logo">🏨 Hotel Booking</div>
-    <div>
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <a href="index.php?action=my_bookings">My Bookings</a>
-            <a href="index.php?action=profile">Profile</a>
-            <a href="index.php?action=logout">Logout</a>
-        <?php else: ?>
-            <a href="index.php?action=login">Login</a>
-            <a href="index.php?action=register">Register</a>
-        <?php endif; ?>
+    <nav>
+        <div class="logo">🏨 Hotel Booking</div>
+        <div>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="index.php?action=my_bookings">My Bookings</a>
+                <a href="index.php?action=profile">Profile</a>
+                <a href="index.php?action=logout">Logout</a>
+            <?php else: ?>
+                <a href="index.php?action=login">Login</a>
+                <a href="index.php?action=register">Register</a>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <a href="index.php?action=home" class="back-link">← Back to Search</a>
+
+
+        <div class="search-summary">
+            Showing rooms for
+            <span><?php echo htmlspecialchars($checkin); ?></span> →
+            <span><?php echo htmlspecialchars($checkout); ?></span>
+            for <span><?php echo htmlspecialchars($guests); ?> guest(s)</span>
+        </div>
+
+
+        <div id="loading">🔍 Searching available rooms...</div>
+
+
+        <div id="noResults">
+            No rooms available for your selected dates.
+            <a href="index.php?action=home">Try different dates</a>
+        </div>
+
+        <div id="roomResults"></div>
+
     </div>
-</nav>
 
-<div class="container">
+  <script src="js/booking.js"></script>
+    <script>
+        const checkin  = "<?php echo htmlspecialchars($checkin); ?>";
+        const checkout = "<?php echo htmlspecialchars($checkout); ?>";
+        const guests   = "<?php echo htmlspecialchars($guests); ?>";
 
-    <a href="index.php?action=home" class="back-link">← Back to Search</a>
-
-
-    <div class="search-summary">
-        Showing rooms for
-        <span><?php echo htmlspecialchars($checkin); ?></span> →
-        <span><?php echo htmlspecialchars($checkout); ?></span>
-        for <span><?php echo htmlspecialchars($guests); ?> guest(s)</span>
-    </div>
-
-
-    <div id="loading">🔍 Searching available rooms...</div>
-
-
-    <div id="noResults">
-         No rooms available for your selected dates.
-        <a href="index.php?action=home">Try different dates</a>
-    </div>
-
-    <div id="roomResults"></div>
-
-</div>
-
-<script>
-
-    const checkin  = "<?php echo htmlspecialchars($checkin); ?>";
-    const checkout = "<?php echo htmlspecialchars($checkout); ?>";
-    const guests   = "<?php echo htmlspecialchars($guests); ?>";
-
-
-    window.addEventListener('load', function() {
-        searchRooms();
-    });
-
-    function searchRooms() {
-        const formData = new FormData();
-        formData.append('checkin',  checkin);
-        formData.append('checkout', checkout);
-        formData.append('guests',   guests);
-
-        fetch('index.php?action=search', {
-            method: 'POST',
-            body:   formData
-        })
-        .then(res => res.json())
-        .then(rooms => {
-            document.getElementById('loading').style.display = 'none';
-
-            if (rooms.length === 0) {
-                document.getElementById('noResults').style.display = 'block';
-                return;
-            }
-
-
-            const container = document.getElementById('roomResults');
-            rooms.forEach(room => {
-
-                let amenityHTML = '';
-                if (room.amenities) {
-                    room.amenities.forEach(a => {
-                        amenityHTML += `<span class="amenity-tag">${a}</span>`;
-                    });
-                }
-
-                container.innerHTML += `
-                    <div class="room-card">
-                        <div class="room-info">
-                            <h3>${room.name}</h3>
-                            <p>${room.description}</p>
-                            <p>👥 Max Capacity: ${room.max_capacity} guests</p>
-                            <div class="amenities">${amenityHTML}</div>
-                        </div>
-                        <div class="room-action">
-                            <div class="price">
-                                $${room.price_per_night}
-                                <span>/ night</span>
-                            </div>
-                            <a href="index.php?action=book&room_type_id=${room.id}&checkin=${checkin}&checkout=${checkout}&guests=${guests}&price=${room.price_per_night}"
-                               class="btn-book">
-                                Book Now
-                            </a>
-                        </div>
-                    </div>
-                `;
-            });
-        })
-        .catch(err => {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('noResults').style.display = 'block';
-            console.error('Search error:', err);
+        window.addEventListener('load', function() {
+            searchRooms(checkin, checkout, guests);
         });
-    }
-</script>
+    </script>
 
 </body>
 </html>

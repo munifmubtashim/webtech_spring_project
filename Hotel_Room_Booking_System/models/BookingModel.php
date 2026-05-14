@@ -1,5 +1,5 @@
 <?php
-include "./Hotel_Room_Booking_System/database.php";
+
 
 function getAvailableRoomTypes($connection, $checkin, $checkout, $guests)
 {
