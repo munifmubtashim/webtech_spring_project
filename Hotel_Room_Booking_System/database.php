@@ -1,7 +1,6 @@
 <?php
-
 function connection() {
-    $db_host     = "localhost";
+    $db_host     = "localhost"; 
     $db_user     = "root";
     $db_password = "";
     $db_name     = "hotel_booking";
@@ -14,6 +13,4 @@ function connection() {
 
     return $connection;
 }
-
-
 ?>
