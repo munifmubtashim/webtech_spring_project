@@ -209,7 +209,7 @@
 
 
     <div id="noResults">
-        😔 No rooms available for your selected dates.
+         No rooms available for your selected dates.
         <a href="index.php?action=home">Try different dates</a>
     </div>
 
