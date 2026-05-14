@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Check-In buttons
+    
     document.querySelectorAll('.btn-checkin').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const bookingId = this.getAttribute('data-id');
@@ -15,12 +15,12 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success)
                 {
-                    // Update badge in status column
+                    
                     const badge = row.querySelector('.badge');
                     badge.textContent   = 'Checked-In';
                     badge.className     = 'badge badge-checkedin';
 
-                    // Swap button to Check Out
+                   
                     this.textContent                    = 'Check Out';
                     this.className                      = 'btn-checkout';
                     this.setAttribute('data-id', bookingId);
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Check-Out buttons (also handles dynamically swapped buttons)
+    
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-checkout'))
         {
