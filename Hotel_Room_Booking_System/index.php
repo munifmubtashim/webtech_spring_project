@@ -8,7 +8,13 @@ if ($action == 'register' || $action == 'login' || $action == 'logout') {
     require_once 'controllers/ProfileController.php';
 } else if ($action == 'rooms' || $action == 'toggle_status') {
     require_once 'controllers/RoomController.php';
-} else if (
+}else if (
+    $action == 'rooms'        ||         $action == 'create_room_type' || 
+            $action == 'update_room_type' ||         $action == 'create_room'  ||    
+                 $action == 'update_room'  ||         $action == 'toggle_status'
+                 )
+                 {    require_once 'controllers/RoomController.php';}
+ else if (
     $action == 'home'    || $action == 'results'  ||
     $action == 'search'  || $action == 'book'     ||
     $action == 'confirm' || $action == 'confirmation' ||
