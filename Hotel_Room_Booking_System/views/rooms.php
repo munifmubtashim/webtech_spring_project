@@ -84,10 +84,26 @@
 <nav>
     <div class="logo">🏨 Hotel Booking</div>
     <div>
-        <a href="index.php?action=rooms">Manage Rooms</a>
-        <a href="index.php?action=bookings">Bookings</a>
-        <a href="index.php?action=dashboard">Dashboard</a>
-        <a href="index.php?action=logout">Logout</a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+
+            <?php if ($_SESSION['role'] == 'admin'): ?>
+                <!-- ADMIN LINKS -->
+                <a href="index.php?action=rooms">Manage Rooms</a>
+                <a href="index.php?action=bookings">Bookings</a>
+                <a href="index.php?action=dashboard">Dashboard</a>
+            <?php else: ?>
+                <!-- GUEST LINKS -->
+                <a href="index.php?action=home">Search Rooms</a>
+                <a href="index.php?action=my_bookings">My Bookings</a>
+                <a href="index.php?action=profile">Profile</a>
+            <?php endif; ?>
+
+            <a href="index.php?action=logout">Logout</a>
+
+        <?php else: ?>
+            <a href="index.php?action=login">Login</a>
+            <a href="index.php?action=register">Register</a>
+        <?php endif; ?>
     </div>
 </nav>
 
