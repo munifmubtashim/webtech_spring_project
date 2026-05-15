@@ -1,98 +1,131 @@
 <?php
 
-function registerUser($connection, $name, $email, $passwordHash, $phone, $nationality)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+session_start();
+require_once 'database.php';
+require_once 'models/UserModel.php';
+
+$connection = connection();
+$action     = $_GET['action'] ?? '';
+
+
+if ($action == 'login')
 {
-    $sql = "INSERT INTO users (name, email, password_hash, phone, nationality, role)
-            VALUES (?, ?, ?, ?, ?, 'guest')";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("sssss", $name, $email, $passwordHash, $phone, $nationality);
-    $result = $statement->execute();
-
-    if ($result)
+    if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token']))
     {
-        return "User Registered Successfully";
+        $result = getUserByToken($connection, $_COOKIE['remember_token']);
+        $user   = $result->fetch_assoc();
+
+        if ($user)
+        {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['name']    = $user['name'];
+            $_SESSION['email']   = $user['email'];
+            $_SESSION['role']    = $user['role'];
+            header('Location: index.php?action=home');
+            exit;
+        }
     }
-    else
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST')
     {
-        return false;
+        $email    = $_POST['email']    ?? '';
+        $password = $_POST['password'] ?? '';
+
+        $result = getUserByEmail($connection, $email);
+        $user   = $result->fetch_assoc();
+
+        if ($user && password_verify($password, $user['password_hash']))
+        {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['name']    = $user['name'];
+            $_SESSION['email']   = $user['email'];
+            $_SESSION['role']    = $user['role'];
+
+            if (isset($_POST['remember_me']))
+            {
+                $token = bin2hex(random_bytes(32));
+                saveRememberToken($connection, $user['id'], $token);
+                setcookie('remember_token', $token, time() + (86400 * 30), '/');
+            }
+
+            header('Location: index.php?action=home');
+            exit;
+        }
+        else
+        {
+            $error = "Invalid email or password";
+        }
     }
+
+    include 'views/login.php';
 }
 
 
-function getUserByEmail($connection, $email)
+else if ($action == 'register')
 {
-    $sql = "SELECT * FROM users WHERE email = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("s", $email);
-    $statement->execute();
-    $result = $statement->get_result();
-    return $result;
-}
-
-
-function getUserById($connection, $userId)
-{
-    $sql = "SELECT * FROM users WHERE id = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("i", $userId);
-    $statement->execute();
-    $result = $statement->get_result();
-    return $result;
-}
-
-
-function updateProfile($connection, $userId, $name, $phone, $nationality, $specialRequests, $preferredRoomTypeId)
-{
-    $sql = "UPDATE users
-            SET name = ?, phone = ?, nationality = ?,
-                special_requests = ?, preferred_room_type_id = ?
-            WHERE id = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("ssssi i", $name, $phone, $nationality, $specialRequests, $preferredRoomTypeId, $userId);
-    $result = $statement->execute();
-
-    if ($result)
+    if ($_SERVER['REQUEST_METHOD'] == 'POST')
     {
-        return "Profile Updated Successfully";
+        $name        = $_POST['name']        ?? '';
+        $email       = $_POST['email']       ?? '';
+        $password    = $_POST['password']    ?? '';
+        $phone       = $_POST['phone']       ?? '';
+        $nationality = $_POST['nationality'] ?? '';
+
+        $error = '';
+        if (empty($name) || empty($email) || empty($password))
+        {
+            $error = "All fields are required";
+        }
+        else if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+        {
+            $error = "Invalid email format";
+        }
+        else if (strlen($password) < 6)
+        {
+            $error = "Password must be at least 6 characters";
+        }
+        else
+        {
+            $check = getUserByEmail($connection, $email);
+            if ($check->fetch_assoc())
+            {
+                $error = "Email already registered";
+            }
+        }
+
+        if (empty($error))
+        {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $result       = registerUser($connection, $name, $email, $passwordHash, $phone, $nationality);
+
+            if ($result)
+            {
+                header('Location: index.php?action=login');
+                exit;
+            }
+            else
+            {
+                $error = "Registration failed. Please try again.";
+            }
+        }
     }
-    else
+
+    include 'views/register.php';
+}
+
+
+else if ($action == 'logout')
+{
+    if (isset($_COOKIE['remember_token']))
     {
-        return false;
+        clearRememberToken($connection, $_SESSION['user_id']);
+        setcookie('remember_token', '', time() - 3600, '/');
     }
-}
 
-
-function saveRememberToken($connection, $userId, $token)
-{
-    $sql = "UPDATE users SET remember_token = ? WHERE id = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("si", $token, $userId);
-    $statement->execute();
-}
-
-
-function getUserByToken($connection, $token)
-{
-    $sql = "SELECT * FROM users WHERE remember_token = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("s", $token);
-    $statement->execute();
-    $result = $statement->get_result();
-    return $result;
-}
-
-
-function clearRememberToken($connection, $userId)
-{
-    $sql = "UPDATE users SET remember_token = NULL WHERE id = ?";
-
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("i", $userId);
-    $statement->execute();
+    session_unset();
+    session_destroy();
+    header('Location: index.php?action=login');
+    exit;
 }
