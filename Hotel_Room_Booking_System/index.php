@@ -26,6 +26,13 @@ if ($action == 'register' || $action == 'login' || $action == 'logout') {
     $action == 'checkin'   || $action == 'revenue'
 ) {
     require_once 'controllers/AdminController.php';
-} else {
+}else if ($action == 'bookings'  ||
+         $action == 'dashboard' ||
+         $action == 'checkin'   ||
+         $action == 'checkout'  ||
+         $action == 'revenue')
+{
+    require_once 'controllers/AdminController.php';
+    } else {
     echo "<h2>404 — Page Not Found</h2>";
 }
