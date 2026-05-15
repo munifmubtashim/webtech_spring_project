@@ -1,8 +1,8 @@
 <?php
-// index.php
+
 $action = $_GET['action'] ?? '';
 
-// ==================== STUDENT 1 ====================
+
 if ($action == 'login'    ||
     $action == 'logout'   ||
     $action == 'register')
@@ -14,7 +14,7 @@ else if ($action == 'profile')
     require_once 'controllers/ProfileController.php';
 }
 
-// ==================== STUDENT 2 ====================
+
 else if ($action == 'rooms'            ||
          $action == 'create_room_type' ||
          $action == 'update_room_type' ||
@@ -25,7 +25,7 @@ else if ($action == 'rooms'            ||
     require_once 'controllers/RoomController.php';
 }
 
-// ==================== STUDENT 3 ====================
+
 else if ($action == 'home'         ||
          $action == 'results'      ||
          $action == 'search'       ||
@@ -39,7 +39,7 @@ else if ($action == 'home'         ||
     require_once 'controllers/BookingController.php';
 }
 
-// ==================== STUDENT 4 ====================
+
 else if ($action == 'bookings'  ||
          $action == 'dashboard' ||
          $action == 'checkin'   ||
@@ -49,7 +49,7 @@ else if ($action == 'bookings'  ||
     require_once 'controllers/AdminController.php';
 }
 
-// ==================== 404 ====================
+
 else
 {
     echo "<h2>404 — Page Not Found</h2>";
