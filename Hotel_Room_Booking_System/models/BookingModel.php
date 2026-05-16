@@ -180,15 +180,28 @@ function getTotalBookings($connection)
 // ==================== TODAY CHECKINS ====================
 function getTodayCheckins($connection)
 {
-    // Looks for any check-ins from today onwards that haven't been processed yet
-    $sql = "SELECT COUNT(*) AS total FROM bookings
-                  WHERE checkin_date >= CURDATE()
-                  AND status = 'Confirmed'";
+    $today = date('Y-m-d'); 
+
+    // ✅ FIXED: Added 'Checked-In' to the status criteria
+    $sql = "SELECT COUNT(*) as total 
+            FROM bookings 
+            WHERE DATE(checkin_date) = ? 
+            AND (status = 'Pending' OR status = 'Confirmed' OR status = 'Checked-In')";
+
     $statement = $connection->prepare($sql);
+    if (!$statement) {
+        return 0;
+    }
+
+    $statement->bind_param("s", $today);
     $statement->execute();
-    $result    = $statement->get_result();
-    $row       = $result->fetch_assoc();
-    return $row['total'];
+    
+    $result = $statement->get_result();
+    $row = $result->fetch_assoc();
+    
+    $statement->close();
+    
+    return $row['total'] ?? 0;
 }
  
 // ==================== OCCUPIED ROOMS COUNT ====================
