@@ -1,7 +1,7 @@
 <?php
-
-
-
+ 
+ 
+ 
 function getAllRoomTypes($connection)
 {
     $sql       = "SELECT * FROM room_types";
@@ -10,7 +10,7 @@ function getAllRoomTypes($connection)
     $result = $statement->get_result();
     return $result;
 }
-
+ 
 function getRoomTypeById($connection, $roomTypeId)
 {
     $sql       = "SELECT * FROM room_types WHERE id = ?";
@@ -20,7 +20,7 @@ function getRoomTypeById($connection, $roomTypeId)
     $result = $statement->get_result();
     return $result;
 }
-
+ 
 function createRoomType($connection, $name, $description, $price_per_night, $max_capacity, $thumbnail_path, $amenities)
 {
     $sql       = "INSERT INTO room_types (name, description, price_per_night, max_capacity, thumbnail_path, amenities)
@@ -28,7 +28,7 @@ function createRoomType($connection, $name, $description, $price_per_night, $max
     $statement = $connection->prepare($sql);
     $statement->bind_param("ssdiss", $name, $description, $price_per_night, $max_capacity, $thumbnail_path, $amenities);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows > 0)
     {
         return "Room Type Created Successfully";
@@ -38,7 +38,7 @@ function createRoomType($connection, $name, $description, $price_per_night, $max
         return false;
     }
 }
-
+ 
 function updateRoomType($connection, $id, $name, $description, $price_per_night, $max_capacity, $thumbnail_path, $amenities)
 {
     $sql       = "UPDATE room_types SET name = ?, description = ?, price_per_night = ?, max_capacity = ?,
@@ -46,7 +46,7 @@ function updateRoomType($connection, $id, $name, $description, $price_per_night,
     $statement = $connection->prepare($sql);
     $statement->bind_param("ssdissi", $name, $description, $price_per_night, $max_capacity, $thumbnail_path, $amenities, $id);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows >= 0)
     {
         return "Room Type Updated Successfully";
@@ -56,7 +56,7 @@ function updateRoomType($connection, $id, $name, $description, $price_per_night,
         return false;
     }
 }
-
+ 
 function updateRoomTypeNoImage($connection, $id, $name, $description, $price_per_night, $max_capacity, $amenities)
 {
     $sql       = "UPDATE room_types SET name = ?, description = ?, price_per_night = ?, max_capacity = ?,
@@ -64,7 +64,7 @@ function updateRoomTypeNoImage($connection, $id, $name, $description, $price_per
     $statement = $connection->prepare($sql);
     $statement->bind_param("ssdisi", $name, $description, $price_per_night, $max_capacity, $amenities, $id);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows >= 0)
     {
         return "Room Type Updated Successfully";
@@ -74,15 +74,15 @@ function updateRoomTypeNoImage($connection, $id, $name, $description, $price_per
         return false;
     }
 }
-
-
+ 
+ 
 function deleteRoomType($connection, $id)
 {
     $sql       = "DELETE FROM room_types WHERE id = ?";
     $statement = $connection->prepare($sql);
     $statement->bind_param("i", $id);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows > 0)
     {
         return "Room Type Deleted Successfully";
@@ -92,7 +92,7 @@ function deleteRoomType($connection, $id)
         return false;
     }
 }
-
+ 
 function getAllRooms($connection)
 {
     $sql       = "SELECT r.*, rt.name AS room_type_name, rt.price_per_night
@@ -104,8 +104,8 @@ function getAllRooms($connection)
     $result = $statement->get_result();
     return $result;
 }
-
-
+ 
+ 
 function getAllRoomsWithOccupancy($connection)
 {
     $sql       = "SELECT r.*, rt.name AS room_type_name, rt.price_per_night,
@@ -126,8 +126,8 @@ function getAllRoomsWithOccupancy($connection)
     $result = $statement->get_result();
     return $result;
 }
-
-
+ 
+ 
 function getRoomById($connection, $roomId)
 {
     $sql       = "SELECT r.*, rt.name AS room_type_name, rt.price_per_night
@@ -140,8 +140,8 @@ function getRoomById($connection, $roomId)
     $result = $statement->get_result();
     return $result;
 }
-
-
+ 
+ 
 function getRoomsByType($connection, $roomTypeId)
 {
     $sql       = "SELECT * FROM rooms WHERE room_type_id = ?";
@@ -151,8 +151,8 @@ function getRoomsByType($connection, $roomTypeId)
     $result = $statement->get_result();
     return $result;
 }
-
-
+ 
+ 
 function roomNumberExists($connection, $room_number, $exclude_id = null)
 {
     if ($exclude_id)
@@ -171,8 +171,8 @@ function roomNumberExists($connection, $room_number, $exclude_id = null)
     $result = $statement->get_result();
     return $result->num_rows > 0;
 }
-
-
+ 
+ 
 function hasFutureBookings($connection, $roomId)
 {
     $sql       = "SELECT id FROM bookings
@@ -186,32 +186,22 @@ function hasFutureBookings($connection, $roomId)
     $result = $statement->get_result();
     return $result->num_rows > 0;
 }
-
-
-function createRoom($connection, $room_number, $floor, $room_type_id, $status)
-{
-    $sql       = "INSERT INTO rooms (room_number, floor, room_type_id, status) VALUES (?, ?, ?, ?)";
-    $statement = $connection->prepare($sql);
-    $statement->bind_param("siis", $room_number, $floor, $room_type_id, $status);
-    $result    = $statement->execute();
-
-    if ($result && $connection->affected_rows > 0)
-    {
-        return "Room Created Successfully";
-    }
-    else
-    {
-        return false;
-    }
+ 
+ 
+function createRoom($connection, $type_id, $number, $floor) {
+    $sql = "INSERT INTO rooms (room_type_id, room_number, floor, status) VALUES (?, ?, ?, 'available')";
+    $stmt = $connection->prepare($sql);
+    $stmt->bind_param("isi", $type_id, $number, $floor);
+    return $stmt->execute();
 }
-
+ 
 function updateRoom($connection, $id, $room_number, $floor, $room_type_id, $status)
 {
     $sql       = "UPDATE rooms SET room_number = ?, floor = ?, room_type_id = ?, status = ? WHERE id = ?";
     $statement = $connection->prepare($sql);
     $statement->bind_param("siisi", $room_number, $floor, $room_type_id, $status, $id);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows >= 0)
     {
         return "Room Updated Successfully";
@@ -221,15 +211,15 @@ function updateRoom($connection, $id, $room_number, $floor, $room_type_id, $stat
         return false;
     }
 }
-
-
+ 
+ 
 function deleteRoom($connection, $roomId)
 {
     $sql       = "DELETE FROM rooms WHERE id = ?";
     $statement = $connection->prepare($sql);
     $statement->bind_param("i", $roomId);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows > 0)
     {
         return "Room Deleted Successfully";
@@ -239,17 +229,33 @@ function deleteRoom($connection, $roomId)
         return false;
     }
 }
-
+ 
 function updateRoomStatus($connection, $roomId, $status)
 {
     $sql       = "UPDATE rooms SET status = ? WHERE id = ?";
     $statement = $connection->prepare($sql);
     $statement->bind_param("si", $status, $roomId);
     $result    = $statement->execute();
-
+ 
     if ($result && $connection->affected_rows > 0)
     {
         return "Status Updated Successfully";
+    }
+    else
+    {
+        return false;
+    }
+}
+function toggleRoomStatus($connection, $roomId, $newStatus)
+{
+    $sql       = "UPDATE rooms SET status = ? WHERE id = ?";
+    $statement = $connection->prepare($sql);
+    $statement->bind_param("si", $newStatus, $roomId);
+    $result    = $statement->execute();
+ 
+    if ($result && $connection->affected_rows >= 0)
+    {
+        return true;
     }
     else
     {
