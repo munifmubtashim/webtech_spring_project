@@ -96,67 +96,63 @@ function cancelBooking($connection, $bookingId, $userId)
 
 
 
-function getAllBookingsFiltered($connection, $statusFilter, $dateFrom, $dateTo)
+// ==================== GET ALL BOOKINGS (Admin) ====================
+function getAllBookings($connection, $status = '', $date = '')
 {
-    $sql = "SELECT b.*, u.name AS guest_name, r.room_number, rt.name AS room_type_name
+    $sql = "SELECT b.*, u.name AS guest_name, u.email AS guest_email,
+                   rt.name AS room_type_name, r.room_number
             FROM bookings b
-            JOIN users u ON b.user_id = u.id
-            JOIN rooms r ON b.room_id = r.id
-            JOIN room_types rt ON r.room_type_id = rt.id
+            JOIN users u       ON b.user_id      = u.id
+            JOIN rooms r       ON b.room_id       = r.id
+            JOIN room_types rt ON r.room_type_id  = rt.id
             WHERE 1=1";
 
     $params = [];
     $types  = '';
 
-    if (!empty($statusFilter))
+    if (!empty($status))
     {
-        $sql     .= " AND b.status = ?";
-        $types   .= 's';
-        $params[] = $statusFilter;
+        $sql    .= " AND b.status = ?";
+        $params[] = $status;
+        $types  .= 's';
     }
-    if (!empty($dateFrom))
+
+    if (!empty($date))
     {
-        $sql     .= " AND b.checkin_date >= ?";
-        $types   .= 's';
-        $params[] = $dateFrom;
-    }
-    if (!empty($dateTo))
-    {
-        $sql     .= " AND b.checkout_date <= ?";
-        $types   .= 's';
-        $params[] = $dateTo;
+        $sql    .= " AND b.checkin_date = ?";
+        $params[] = $date;
+        $types  .= 's';
     }
 
     $sql .= " ORDER BY b.created_at DESC";
 
     $statement = $connection->prepare($sql);
+
     if (!empty($params))
     {
         $statement->bind_param($types, ...$params);
     }
+
     $statement->execute();
     return $statement->get_result();
 }
 
+// ==================== CHECKIN ====================
 function checkInBooking($connection, $bookingId)
 {
     $sql = "UPDATE bookings
             SET status = 'Checked-In', actual_checkin = NOW()
             WHERE id = ?
-            AND status = 'Confirmed'
-            AND checkin_date = CURDATE()";
+            AND status = 'Confirmed'";
 
     $statement = $connection->prepare($sql);
     $statement->bind_param("i", $bookingId);
     $statement->execute();
 
-    if ($connection->affected_rows > 0) {
-        return true;
-    }
-
-    return false;
+    return $connection->affected_rows > 0;
 }
 
+// ==================== CHECKOUT ====================
 function checkOutBooking($connection, $bookingId)
 {
     $sql = "UPDATE bookings
@@ -168,79 +164,79 @@ function checkOutBooking($connection, $bookingId)
     $statement->bind_param("i", $bookingId);
     $statement->execute();
 
-    if ($connection->affected_rows > 0)
-    {
-        $sqlRoom = "UPDATE rooms r
-                    JOIN bookings b ON r.id = b.room_id
-                    SET r.status = 'available'
-                    WHERE b.id = ?";
-        $stmtRoom = $connection->prepare($sqlRoom);
-        $stmtRoom->bind_param("i", $bookingId);
-        $stmtRoom->execute();
-        return true;
-    }
-
-    return false;
+    return $connection->affected_rows > 0;
 }
 
-function getTodayArrivals($connection)
+// ==================== TOTAL BOOKINGS ====================
+function getTotalBookings($connection)
 {
-    $sql = "SELECT b.*, u.name AS guest_name, r.room_number, rt.name AS room_type_name
-            FROM bookings b
-            JOIN users u ON b.user_id = u.id
-            JOIN rooms r ON b.room_id = r.id
-            JOIN room_types rt ON r.room_type_id = rt.id
-            WHERE b.checkin_date = CURDATE()
-            AND b.status = 'Confirmed'";
-
+    $sql       = "SELECT COUNT(*) AS total FROM bookings";
     $statement = $connection->prepare($sql);
     $statement->execute();
-    return $statement->get_result();
+    $result    = $statement->get_result();
+    $row       = $result->fetch_assoc();
+    return $row['total'];
 }
 
-function getTodayDepartures($connection)
+// ==================== TODAY CHECKINS ====================
+function getTodayCheckins($connection)
 {
-    $sql = "SELECT b.*, u.name AS guest_name, r.room_number, rt.name AS room_type_name
-            FROM bookings b
-            JOIN users u ON b.user_id = u.id
-            JOIN rooms r ON b.room_id = r.id
-            JOIN room_types rt ON r.room_type_id = rt.id
-            WHERE b.checkout_date = CURDATE()
-            AND b.status = 'Checked-In'";
-
+    $sql       = "SELECT COUNT(*) AS total FROM bookings
+                  WHERE checkin_date = CURDATE()
+                  AND status IN ('Confirmed', 'Checked-In')";
     $statement = $connection->prepare($sql);
     $statement->execute();
-    return $statement->get_result();
+    $result    = $statement->get_result();
+    $row       = $result->fetch_assoc();
+    return $row['total'];
 }
 
-function getRoomSummaryCounts($connection)
+// ==================== OCCUPIED ROOMS COUNT ====================
+function getOccupiedRoomsCount($connection)
 {
-    $sql = "SELECT
-                (SELECT COUNT(*) FROM rooms) AS total_rooms,
-                (SELECT COUNT(*) FROM bookings WHERE status = 'Checked-In') AS occupied_rooms,
-                (SELECT COUNT(*) FROM rooms WHERE status = 'available') AS available_rooms,
-                (SELECT COUNT(*) FROM rooms WHERE status = 'maintenance') AS maintenance_rooms";
-
+    $sql       = "SELECT COUNT(DISTINCT room_id) AS total
+                  FROM bookings
+                  WHERE status = 'Checked-In'";
     $statement = $connection->prepare($sql);
     $statement->execute();
-    return $statement->get_result();
+    $result    = $statement->get_result();
+    $row       = $result->fetch_assoc();
+    return $row['total'];
 }
 
+// ==================== TOTAL ROOMS COUNT ====================
+function getTotalRoomsCount($connection)
+{
+    $sql       = "SELECT COUNT(*) AS total FROM rooms";
+    $statement = $connection->prepare($sql);
+    $statement->execute();
+    $result    = $statement->get_result();
+    $row       = $result->fetch_assoc();
+    return $row['total'];
+}
+
+// ==================== WEEKLY REVENUE ====================
 function getWeeklyRevenue($connection)
 {
-    $sql = "SELECT WEEK(checkin_date) AS week_number,
-                   YEAR(checkin_date) AS year,
-                   SUM(total_price)   AS total_revenue,
-                   MIN(checkin_date)  AS week_start
+    $sql = "SELECT 
+                YEAR(checkin_date)                  AS year,
+                WEEK(checkin_date)                  AS week,
+                SUM(total_price)                    AS revenue,
+                MIN(checkin_date)                   AS week_start
             FROM bookings
-            WHERE status IN ('Confirmed', 'Checked-In', 'Checked-Out')
+            WHERE status IN ('Confirmed','Checked-In','Checked-Out')
             AND checkin_date >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
             GROUP BY YEAR(checkin_date), WEEK(checkin_date)
-            ORDER BY year ASC, week_number ASC";
+            ORDER BY year, week";
 
     $statement = $connection->prepare($sql);
     $statement->execute();
-    return $statement->get_result();
-}
+    $result = $statement->get_result();
 
-?>
+    $data = [];
+    while ($row = $result->fetch_assoc())
+    {
+        $data[] = $row;
+    }
+    return $data;
+}
