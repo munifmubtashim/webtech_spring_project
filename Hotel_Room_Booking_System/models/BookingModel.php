@@ -243,14 +243,13 @@ function getWeeklyRevenue($connection)
 }
 function confirmBooking($connection, $bookingId)
 {
-    // Ensure the table name ('bookings') matches your exact database structure
     $sql = "UPDATE bookings SET status = 'Confirmed' WHERE id = ?";
     $statement = $connection->prepare($sql);
-    
     if (!$statement) {
         return false;
     }
- 
     $statement->bind_param("i", $bookingId);
-    return $statement->execute();
+    $result = $statement->execute();
+    $statement->close();
+    return $result;
 }
