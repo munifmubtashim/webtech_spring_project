@@ -1,6 +1,3 @@
-<?php
-// views/bookings.php
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +24,7 @@
             padding:25px; margin-bottom:20px;
             box-shadow:0 2px 8px rgba(0,0,0,0.08);
         }
-
+ 
         /* FILTER */
         .filter-form {
             display:flex; gap:15px;
@@ -50,7 +47,7 @@
             cursor:pointer;
         }
         .btn-filter:hover { background-color:#f39c12; }
-
+ 
         /* TABLE */
         table { width:100%; border-collapse:collapse; }
         th {
@@ -60,7 +57,7 @@
         }
         td { padding:10px; border-bottom:1px solid #f4f4f4; font-size:13px; color:#555; }
         tr:hover td { background-color:#fafafa; }
-
+ 
         /* BADGES */
         .badge {
             padding:3px 10px; border-radius:20px;
@@ -71,8 +68,17 @@
         .badge-checkedin  { background:#eaf0fb; color:#2980b9; border:1px solid #2980b9; }
         .badge-checkedout { background:#f4f4f4; color:#888;    border:1px solid #ccc;    }
         .badge-cancelled  { background:#fdedec; color:#e74c3c; border:1px solid #e74c3c; }
-
+ 
         /* ACTION BUTTONS */
+        .btn-confirm {
+            padding:5px 12px;
+            background-color:#f39c12;
+            color:white; border:none;
+            border-radius:4px; font-size:12px;
+            cursor:pointer;
+        }
+        .btn-confirm:hover { background-color:#e67e22; }
+ 
         .btn-checkin {
             padding:5px 12px;
             background-color:#27ae60;
@@ -81,7 +87,7 @@
             cursor:pointer;
         }
         .btn-checkin:hover { background-color:#1e8449; }
-
+ 
         .btn-checkout {
             padding:5px 12px;
             background-color:#2980b9;
@@ -90,7 +96,7 @@
             cursor:pointer;
         }
         .btn-checkout:hover { background-color:#1a5276; }
-
+ 
         /* TOAST */
         .toast {
             position:fixed; bottom:30px; right:30px;
@@ -102,11 +108,11 @@
     </style>
 </head>
 <body>
-
+ 
 <nav>
     <div class="logo">🏨 Hotel Booking</div>
     <div>
-        <?php if ($_SESSION['role'] == 'admin'): ?>
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
             <a href="index.php?action=rooms">Manage Rooms</a>
             <a href="index.php?action=bookings">Bookings</a>
             <a href="index.php?action=dashboard">Dashboard</a>
@@ -114,13 +120,12 @@
         <a href="index.php?action=logout">Logout</a>
     </div>
 </nav>
-
+ 
 <div class="container">
     <div class="page-title">📋 Booking Management</div>
-
+ 
     <div class="card">
-
-        <!-- FILTER FORM -->
+ 
         <form class="filter-form" method="GET" action="index.php">
             <input type="hidden" name="action" value="bookings">
             <select name="status">
@@ -135,8 +140,7 @@
             <button type="submit" class="btn-filter">Filter</button>
             <a href="index.php?action=bookings" class="btn-filter" style="text-decoration:none;">Reset</a>
         </form>
-
-        <!-- BOOKINGS TABLE -->
+ 
         <table>
             <tr>
                 <th>ID</th>
@@ -148,7 +152,7 @@
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-
+ 
             <?php if (empty($bookings)): ?>
             <tr>
                 <td colspan="8" style="text-align:center; padding:30px; color:#999;">
@@ -167,33 +171,40 @@
                 <tr id="row-<?php echo $booking['id']; ?>">
                     <td>#<?php echo $booking['id']; ?></td>
                     <td>
-                        <?php echo htmlspecialchars($booking['guest_name']); ?><br>
-                        <small><?php echo htmlspecialchars($booking['guest_email']); ?></small>
+                        <?php echo htmlspecialchars($booking['guest_name'] ?? ''); ?><br>
+                        <small><?php echo htmlspecialchars($booking['guest_email'] ?? ''); ?></small>
                     </td>
                     <td>
-                        <?php echo htmlspecialchars($booking['room_type_name']); ?><br>
-                        <small>Room <?php echo htmlspecialchars($booking['room_number']); ?></small>
+                        <?php echo htmlspecialchars($booking['room_type_name'] ?? ''); ?><br>
+                        <small>Room <?php echo htmlspecialchars($booking['room_number'] ?? ''); ?></small>
                     </td>
-                    <td><?php echo htmlspecialchars($booking['checkin_date']); ?></td>
-                    <td><?php echo htmlspecialchars($booking['checkout_date']); ?></td>
-                    <td>$<?php echo number_format($booking['total_price'], 2); ?></td>
+                    <td><?php echo htmlspecialchars($booking['checkin_date'] ?? ''); ?></td>
+                    <td><?php echo htmlspecialchars($booking['checkout_date'] ?? ''); ?></td>
+                    <td>$<?php echo number_format($booking['total_price'] ?? 0, 2); ?></td>
                     <td>
                         <span class="badge <?php echo $badgeClass; ?>"
                               id="status-<?php echo $booking['id']; ?>">
-                            <?php echo htmlspecialchars($booking['status']); ?>
+                            <?php echo htmlspecialchars($booking['status'] ?? ''); ?>
                         </span>
                     </td>
+                    
                     <td>
-                        <?php if ($booking['status'] == 'Confirmed'): ?>
+                        <?php if ($booking['status'] == 'Pending'): ?>
+                            <button class="btn-confirm"
+                                    id="btn-<?php echo $booking['id']; ?>"
+                                    onclick="confirmBooking(<?php echo (int)$booking['id']; ?>)">
+                                Confirm
+                            </button>
+                        <?php elseif ($booking['status'] == 'Confirmed'): ?>
                             <button class="btn-checkin"
                                     id="btn-<?php echo $booking['id']; ?>"
-                                    onclick="checkIn(<?php echo $booking['id']; ?>)">
+                                    onclick="checkIn(<?php echo (int)$booking['id']; ?>)">
                                 Check In
                             </button>
-                        <?php else if ($booking['status'] == 'Checked-In'): ?>
+                        <?php elseif ($booking['status'] == 'Checked-In'): ?>
                             <button class="btn-checkout"
                                     id="btn-<?php echo $booking['id']; ?>"
-                                    onclick="checkOut(<?php echo $booking['id']; ?>)">
+                                    onclick="checkOut(<?php echo (int)$booking['id']; ?>)">
                                 Check Out
                             </button>
                         <?php else: ?>
@@ -206,10 +217,10 @@
         </table>
     </div>
 </div>
-
+ 
 <div class="toast" id="toast"></div>
-
+ 
 <script src="js/admin.js"></script>
-
+ 
 </body>
 </html>
