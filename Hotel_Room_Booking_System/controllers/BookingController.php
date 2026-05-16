@@ -92,10 +92,21 @@ else if ($action == 'confirm')
 }
 else if ($action == 'confirmation')
 {
+
     $bookingId = $_GET['booking_id'] ?? '';
-    $result    = getBookingById($connection, $bookingId);
-    $booking   = $result->fetch_assoc();
-    include 'views/confirmation.php';
+    
+    $booking = null; // Set fallback default
+    if (!empty($bookingId))
+    {
+        $result  = getBookingById($connection, $bookingId);
+        if ($result)
+        {
+            $booking = $result->fetch_assoc();
+        }
+    }
+
+
+    include 'views/confirmation.php'; 
 }
 else if ($action == 'my_bookings')
 {
